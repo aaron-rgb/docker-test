@@ -1,0 +1,12 @@
+# Ignore MySQL runtime files
+mysql_data/
+*.sock
+*.pid
+*.log
+*.cnf
+*.index
+
+# Optional: Ignore Docker bind-mounts and other temp files
+odc-reports/
+odc-data/
+dependency-check-report/
