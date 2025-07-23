@@ -1,16 +1,20 @@
 services:
-    nginxwebsvr:
-        image: nginx:alpine
-        container_name: nginxwebsvr
-        ports:
-            - "80:80"
+  nginxwebsvr:
+    image: nginx:alpine
+    container_name: nginxwebsvr
+    ports:
+      - "80:80"
+    volumes:
+      # Mount the host folder ‘website’ into Nginx’s web root
+      - ./website:/usr/share/nginx/html:ro
 
-    git-server:
-      build:
-        dockerfile: gitserver.Dockerfile
-        context: .
-      restart: always
-      ports:
-        - "3000:3000"
-      volumes:
-        - ./repos:/var/www/git
+  git-server:
+    build:
+      context: .
+      dockerfile: gitserver.Dockerfile
+    container_name: git-server
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./repos:/var/www/git
