@@ -1,13 +1,16 @@
+version: "3.9"
+
 services:
+  # ──────────── 1) Static-site + Nginx ────────────
   nginxwebsvr:
     image: nginx:alpine
     container_name: nginxwebsvr
     ports:
       - "80:80"
     volumes:
-      # Mount the host folder ‘website’ into Nginx’s web root
-      - ./website:/usr/share/nginx/html:ro
+      - ./website:/usr/share/nginx/html:ro        # serve your pages
 
+  # ──────────── 2) Lightweight Git server ─────────
   git-server:
     build:
       context: .
@@ -17,4 +20,42 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./repos:/var/www/git
+      - ./repos:/var/www/git                       # bare repos live here
+
+  # ──────────── 3) PostgreSQL for SonarQube ──────
+  sonardb:
+    image: postgres:15
+    container_name: sonarqube_db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data   # persist DB files
+
+  # ──────────── 4) SonarQube server ──────────────
+  sonarqube:
+    image: sonarqube:community                    # “latest” is fine but explicit tag safer
+    container_name: sonarqube
+    depends_on:
+      - sonardb
+    ports:
+      - "9000:9000"    # Web UI
+      - "9092:9092"    # internal (cluster) port
+    environment:
+      SONAR_JDBC_URL:      jdbc:postgresql://sonardb:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      # Optional memory tune-ups (helps on low-RAM laptops)
+      SONAR_WEB_JAVAOPTS:  "-Xms512m -Xmx512m"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+volumes:
+  # ───────── Nginx/site uses host bind-mount already ─────────
+  postgresql_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
